@@ -1,7 +1,7 @@
 # BDC-Discord-Bot
 A discord bot for the UMass Dartmouth Big Data Club!
 
-Current commands:
+#### Current commands ####
 
 /scoreboard : View the current scoreboard for the club
 
