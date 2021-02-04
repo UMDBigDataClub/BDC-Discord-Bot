@@ -31,6 +31,7 @@ async def on_message(message):
     
     
     if message.content.startswith('/scoreboard'):
+        scoreboard = scoreboard.sort_values("Score", axis = 0, ascending = False).reset_index(drop = True)
         await message.channel.send(scoreboard)
 
 client.run(os.getenv('TOKEN'))
