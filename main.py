@@ -30,6 +30,9 @@ async def on_message(message):
 
     scoreboard = pd.read_csv("scoreboard.csv", index_col = "Unnamed: 0")
     
+    if message.author.name=="GitHub":
+        await message.channel.send(str(message.embeds[0].to_dict()))
+    
     if message.author.name not in scoreboard.Member.values:
         scoreboard = scoreboard.append(pd.DataFrame({"Member" : [message.author.name], "Score" : [0]}), ignore_index = True, sort = True)
         scoreboard.to_csv("scoreboard.csv")
@@ -46,6 +49,16 @@ async def on_message(message):
     if message.content.startswith('/scoreboard'):
         scoreboard = scoreboard.sort_values("Score", axis = 0, ascending = False).reset_index(drop = True)
         await message.channel.send(scoreboard)
+        
+    if message.content.startswith('/awards'):
+        content = \
+        """
+        Here is the list of awards available at the end of season:
+        Consulting Award - to any member that completes a BDC-sponsored consulting project - 100 points
+        Recruiting Award - to any member that recruits a new active member to the club - 100 points
+        Presentation Award - to any member that gives a presentation - 50 points
+        """
+        await message.channel.send(content)
 
 client.run(os.getenv('TOKEN'))
 
