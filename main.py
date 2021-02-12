@@ -4,6 +4,8 @@ import os
 import boto3
 import pandas as pd
 from dotenv import load_dotenv
+from discord.ext import commands
+from discord.utils import get
 
 load_dotenv()
 
@@ -59,6 +61,25 @@ async def on_message(message):
         Presentation Award - to any member that gives a presentation - 50 points
         """
         await message.channel.send(content)
+
+
+#reation roles, assigns roles based on emoji used for the reaction of a specific message
+@client.event
+async def on_reaction_add(reaction, user):
+    message_id = 'React with an emoji to be assigned a role, choose all that apply.'
+    message = reaction.message.content
+    channel = reaction.message.channel
+    Guild = reaction.message.guild
+    role_member = 809832119294492692 
+    #replace this role id with the role id from BDC discord server, I used this other role on my testing server
+    # add more roles by copying the role id in discord, for example you could add a data sceince role and copy the id into data_science.
+    member_role = get(Guild.roles, id = role_member)
+    #each role will need an emoji to go along with it.
+    if message_id == message and reaction.emoji == '👍':
+        channel = reaction.message.channel
+        await user.add_roles(member_role)
+
+
 
 client.run(os.getenv('TOKEN'))
 
