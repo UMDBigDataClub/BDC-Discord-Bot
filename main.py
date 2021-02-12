@@ -28,7 +28,6 @@ async def on_message(message):
     if message.author == client.user:
         return
 
-    scoreboard = pd.read_csv("scoreboard.csv", index_col = "Unnamed: 0")
     
     if message.author.name=="GitHub":
         await message.channel.send(str(message.embeds[0].to_dict()))
