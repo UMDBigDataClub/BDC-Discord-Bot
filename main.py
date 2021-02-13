@@ -27,6 +27,7 @@ async def on_ready():
   
 @client.event
 async def on_disconnect():
+    global S3
     s3.Bucket('bdc-scoreboard').upload_file(Filename='scoreboard.csv', Key='scoreboard.csv')
 
 @client.event
