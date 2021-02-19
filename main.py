@@ -28,7 +28,10 @@ async def on_message(message):
         return
 
     if message.author.name=="GitHub":
-        await message.channel.send(str(message.embeds[0].to_dict()))
+        committer = message.embeds[0].to_dict()["author"]["name"]
+        if committer in sb.df.Member.values:
+            sb.add(committer, 20)
+            await message.channel.send(name + " has earned 20 points for committing to GitHub!")
     
     # Adds member to scoreboard.csv if they are already not added on message
     if message.author.name not in sb.df.Member.values:
