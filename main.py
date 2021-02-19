@@ -13,6 +13,10 @@ sb = Scoreboard()
 
 client = discord.Client()
 
+prev_author = ""
+cur_author = ""
+prev_committer = ""
+
 
 
 @client.event
@@ -23,48 +27,70 @@ async def on_ready():
 @client.event
 async def on_message(message):
     global sb
+    global prev_author
+    global cur_author
+    global prev_committer
+
+    if message.author != "BDC-Bot" and message.author != "GitHub":
+        prev_author = cur_author
+        cur_author = message.author.name
+
     
     if message.author == client.user:
         return
 
+    #Give members one point for each message, but only if they are not posting multiple times in a row
+    if cur_author != prev_author and prev_author != "" and not message.content.startswith('/') and not message.content.startswith('\''):
+        sb.add(cur_author, 1)
+
+
+    #Give members 20 points for each GitHub commit, but only if they are nonconsecutive
     if message.author.name=="GitHub":
         committer = message.embeds[0].to_dict()["author"]["name"]
-        if committer in sb.df.Member.values:
-            sb.add(committer, 20)
+        #Test for previous committer
+        if committer in sb.df.GitHub.values and committer != prev_committer:
+            prev_committer = committer
+            name = sb.df[sb.df.GitHub == committer].Member.iloc[0]
+            sb.add(name, 20)
             await message.channel.send(name + " has earned 20 points for committing to GitHub!")
-    
+    else:
+        prev_committer = ""
+
     # Adds member to scoreboard.csv if they are already not added on message
     if message.author.name not in sb.df.Member.values:
         sb.create_user(name = message.author.name)
 
 
     #Administrator-only commands
-    if 'Administrator' in [role.name for role in message.author.roles]:
+    try:
+        if 'Administrator' in [role.name for role in message.author.roles]:
 
-        # Adds and subtracts values to a person's score
-        if message.content.startswith('/add'):
-            name = " ".join(message.content.split(" ")[2:])
-            value = int(message.content.split(" ")[1])
-            sb.add(name, value)
+            # Adds and subtracts values to a person's score
+            if message.content.startswith('/add'):
+                name = " ".join(message.content.split(" ")[2:])
+                value = int(message.content.split(" ")[1])
+                sb.add(name, value)
 
+        #Commands for administrator or the user themselves
+        if 'Administrator' in [role.name for role in message.author.roles] or message.author.name == " ".join(message.content.split(" ")[2:]):
+            # Update individual information
+            if message.content.startswith('/set_github '):
+                github = message.content.split(" ")[1]
+                name = " ".join(message.content.split(" ")[2:])
+                sb.update(name=name, github=github)
 
-    #Commands for administrator or the user themselves
-    if 'Administrator' in [role.name for role in message.author.roles] or message.author.name == " ".join(message.content.split(" ")[2:]):
-        # Update individual information
-        if message.content.startswith('/set_github '):
-            github = message.content.split(" ")[1]
-            name = " ".join(message.content.split(" ")[2:])
-            sb.update(name=name, github=github)
+            if message.content.startswith('/set_email '):
+                email = message.content.split(" ")[1]
+                name = " ".join(message.content.split(" ")[2:])
+                sb.update(name=name, email=email)
 
-        if message.content.startswith('/set_email '):
-            email = message.content.split(" ")[1]
-            name = " ".join(message.content.split(" ")[2:])
-            sb.update(name=name, email=email)
+            if message.content.startswith('/set_participating '):
+                participating = bool(message.content.split(" ")[1])
+                name = " ".join(message.content.split(" ")[2:])
+                sb.update(name=name, participating=participating)
 
-        if message.content.startswith('/set_participating '):
-            participating = bool(message.content.split(" ")[1])
-            name = " ".join(message.content.split(" ")[2:])
-            sb.update(name=name, participating=participating)
+    except AttributeError:
+        pass
 
     
     # Prints the score of everyone in the scoreboard.csv file

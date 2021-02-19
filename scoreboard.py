@@ -30,7 +30,8 @@ class Scoreboard:
     def add(self,name,value):
         self.df.at[self.df[self.df.Member == name].index[0], "Score"] += value
         self.df.at[self.df[self.df.Member == name].index[0], "AllTime"] += value
-        self.df.sort_values("Score", axis=0, inplace = True, ascending=False).reset_index(drop=True)
+        self.df.sort_values("Score", axis=0, inplace = True, ascending=False)
+        self.df.reset_index(drop=True, inplace = True)
         self.df.to_csv("scoreboard.csv")
         self.s3.Bucket('bdc-scoreboard').upload_file(Filename='scoreboard.csv', Key='scoreboard.csv')
 
