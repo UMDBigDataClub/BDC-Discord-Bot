@@ -3,22 +3,16 @@ import discord
 import os
 import boto3
 import pandas as pd
-from dotenv import load_dotenv
+import json
 from discord.utils import get
+from scoreboard import Scoreboard
 
-load_dotenv()
 
-s3 = boto3.resource(
-        service_name='s3',
-        region_name='us-east-2',
-        aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-        aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')
-    )
-obj = s3.Bucket('bdc-scoreboard').Object("scoreboard.csv").get()
-scoreboard = pd.read_csv(obj["Body"], index_col = 0)
-scoreboard.to_csv("scoreboard.csv")
+
+sb = Scoreboard()
 
 client = discord.Client()
+
 
 
 @client.event
@@ -28,8 +22,7 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    global scoreboard
-    global S3
+    global sb
     
     if message.author == client.user:
         return
@@ -37,36 +30,65 @@ async def on_message(message):
     if message.author.name=="GitHub":
         await message.channel.send(str(message.embeds[0].to_dict()))
     
-    # Adds member to scoreboard.csv if they are already not add on
-    if message.author.name not in scoreboard.Member.values:
-        scoreboard = scoreboard.append(pd.DataFrame({"Member" : [message.author.name], "Score" : [0]}), ignore_index = True, sort = True)
-        scoreboard.to_csv("scoreboard.csv")
-        s3.Bucket('bdc-scoreboard').upload_file(Filename='scoreboard.csv', Key='scoreboard.csv')
-    
-    # Adds and subtracts values to a person's score
-    if message.content.startswith('/add'):
-        name = " ".join(message.content.split(" ")[2:])
-        value = int(message.content.split(" ")[1])
-        scoreboard.at[scoreboard[scoreboard.Member == name].index[0], "Score"] += value
-        scoreboard.to_csv("scoreboard.csv")
-        s3.Bucket('bdc-scoreboard').upload_file(Filename='scoreboard.csv', Key='scoreboard.csv')
+    # Adds member to scoreboard.csv if they are already not added on message
+    if message.author.name not in sb.df.Member.values:
+        sb.create_user(name = message.author.name)
+
+
+    #Administrator-only commands
+    if 'Administrator' in [role.name for role in message.author.roles]:
+
+        # Adds and subtracts values to a person's score
+        if message.content.startswith('/add'):
+            name = " ".join(message.content.split(" ")[2:])
+            value = int(message.content.split(" ")[1])
+            sb.add(name, value)
+
+
+    #Commands for administrator or the user themselves
+    if 'Administrator' in [role.name for role in message.author.roles] or message.author.name == " ".join(message.content.split(" ")[2:]):
+        # Update individual information
+        if message.content.startswith('/set_github '):
+            github = message.content.split(" ")[1]
+            name = " ".join(message.content.split(" ")[2:])
+            sb.update(name=name, github=github)
+
+        if message.content.startswith('/set_email '):
+            email = message.content.split(" ")[1]
+            name = " ".join(message.content.split(" ")[2:])
+            sb.update(name=name, email=email)
+
+        if message.content.startswith('/set_participating '):
+            participating = bool(message.content.split(" ")[1])
+            name = " ".join(message.content.split(" ")[2:])
+            sb.update(name=name, participating=participating)
 
     
     # Prints the score of everyone in the scoreboard.csv file
+    if message.content == '/scoreboard':
+        await message.channel.send(sb.display())
 
-    if message.content.startswith('/scoreboard'):
-        scoreboard = scoreboard.sort_values("Score", axis = 0, ascending = False).reset_index(drop = True)
-        await message.channel.send(scoreboard)
+    elif message.content == '/scoreboard_everyone':
+        await message.channel.send(sb.display(non_participating = True))
+
+    elif message.content == '/scoreboard_all_time':
+        await message.channel.send(sb.display(all_time = True, non_participating = True))
         
 
-    # Prints the score of the individual    
-    if message.content.startswith('/score '):
-        scoreboard = scoreboard.sort_values("Score", axis = 0, ascending = False).reset_index(drop = True)
+    # Prints the score of an individual
+    elif message.content.startswith('/score_all_time '):
         name = " ".join(message.content.split(" ")[1:])
-        personalScore = scoreboard[scoreboard.Member == name]
-        await message.channel.send(personalScore)
+        await message.channel.send(sb.display(name = name, all_time = True))
 
-    if message.content.startswith('/awards'):
+    elif message.content.startswith('/score '):
+        name = " ".join(message.content.split(" ")[1:])
+        await message.channel.send(sb.display(name = name))
+
+
+
+
+    #Print manual awards
+    elif message.content.startswith('/awards'):
         content = \
         """
         Here is the list of awards available at the end of season:
