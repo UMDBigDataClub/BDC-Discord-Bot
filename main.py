@@ -17,7 +17,11 @@ prev_author = ""
 cur_author = ""
 prev_committer = ""
 
-bot = commands.Bot(command_prefix='!')
+intents = discord.Intents.default()
+intents.members = True
+
+bot = commands.Bot(command_prefix='!', intents=intents)
+
 
 
 @bot.event
@@ -56,47 +60,73 @@ async def scoreboard_all_time(ctx, username):
     await ctx.send(sb.display(name=username))
 
 @bot.command(name='add')
-async def add(ctx, arg1, arg2):
+async def add(ctx, username, value):
     if 'Administrator' in [role.name for role in ctx.author.roles]:
-        sb.add(arg1, arg2)
+        sb.add(username, int(value))
 
 @bot.command(name='set_github')
-async def set_github(ctx, username, github):
-    if 'Administrator' in [role.name for role in ctx.author.roles] or ctx.author.name == arg2:
+async def set_github(ctx, github, username=None):
+    if not username:
+        sb.update(name=ctx.author.name, github=github)
+    elif 'Administrator' in [role.name for role in ctx.author.roles]:
         sb.update(name=username, github=github)
 
 @bot.command(name='set_email')
-async def set_email(ctx, username, email):
-    if 'Administrator' in [role.name for role in ctx.author.roles] or ctx.author.name == arg2:
+async def set_email(ctx, email, username=None):
+    if not username:
+        sb.update(name=ctx.author.name, email=email)
+    elif 'Administrator' in [role.name for role in ctx.author.roles]:
         sb.update(name=username, email=email)
 
-@bot.command(name='honk')
-async def honk(ctx):
-    await ctx.send("*doot doot*")
-
-
 @bot.command(name='set_participating')
-async def set_participating(ctx, username, participating_yes_or_no):
-    if 'Administrator' in [role.name for role in ctx.author.roles] or ctx.author.name == participating_yes_or_no:
-        sb.update(name=username, participating=participating_yes_or_no)
+async def set_participating(ctx, participating_true_or_false, username=None):
+    if not username:
+        sb.update(name=ctx.author.name, participating = participating_true_or_false)
+    elif 'Administrator' in [role.name for role in ctx.author.roles]:
+        sb.update(name=username, participating = participating_true_or_false)
 
-@bot.command(name='new_user')
-async def new_user(ctx, name, email=None, github=None):
+@bot.command(name='add_user')
+async def add_user(ctx, name, email=None, github=None):
     if 'Administrator' in [role.name for role in ctx.author.roles]:
         sb.create_user(name, email, github)
 
+@bot.command(name='remove_user')
+async def remove_user(ctx, name):
+    if 'Administrator' in [role.name for role in ctx.author.roles]:
+        sb.remove_user(name)
+
+@bot.command(name='add_award')
+async def add_award(ctx, award, description=None, points=None):
+    sb.add_award(award, description, points)
+
+@bot.command(name='set_award_desc')
+async def set_award_desc(ctx, award, description=None, points=None):
+    sb.edit_award(award, description=description)
+
+@bot.command(name='set_award_points')
+async def set_award_points(ctx, award, description=None, points=None):
+    sb.edit_award(award, points=points)
+
+@bot.command(name='remove_award')
+async def remove_award(ctx, award):
+    sb.remove_award(award)
+
+@bot.command(name='honk')
+async def honk(ctx):
+    await ctx.send(":bird: *doot doot* :bird:")
+
 @bot.command(name='awards')
 async def awards(ctx):
-    content = \
-        """
-        Here is the list of awards available at the end of season:
-        Consulting Award - to any member that completes a BDC-sponsored consulting project - 100 points
-        Recruiting Award - to any member that recruits a new active member to the club - 100 points
-        Presentation Award - to any member that gives a presentation - 50 points
-        """
-    await ctx.send(content)
+    embed = discord.Embed(title="Scoreboard Awards",
+                          description="List of potential tasks to win points on the scoreboard.",
+                          color=0x3357FF)
 
+    embed.add_field(name="**Available Awards**", value="" + sb.display_awards() + "")
+    await ctx.send(embed=embed)
 
+@bot.event
+async def on_member_join(member):
+    sb.create_user(member.name)
 
 @bot.event
 async def on_message(message):
