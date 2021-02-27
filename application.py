@@ -1,17 +1,13 @@
 # -*- coding: utf-8 -*-
 import discord
 import os
-import boto3
 import pandas as pd
 import json
 from discord.utils import get
 from discord.ext import commands
 from scoreboard import Scoreboard
 
-
-
 sb = Scoreboard()
-
 
 prev_author = ""
 cur_author = ""
