@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from cogs.scoreboard import Scoreboard
+from scoreboard import Scoreboard
 
 class ScoreboardAwards(commands.Cog):
     def __init__(self, bot):
