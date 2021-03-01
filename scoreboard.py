@@ -95,7 +95,7 @@ class Scoreboard:
         print(points)
         self.awards = self.awards.append(pd.DataFrame({"Award": [award], "Description": [description], "Point Value": [points]}), ignore_index=True, sort=True)
         self.awards.to_csv("awards.csv")
-        self.s3.Bucket('bdc-scoreboard').upload_file(Filename='../awards.csv', Key='awards.csv')
+        self.s3.Bucket('bdc-scoreboard').upload_file(Filename='awards.csv', Key='awards.csv')
 
     #Edit award
     def edit_award(self, award, description = None, points = None):
@@ -106,13 +106,13 @@ class Scoreboard:
             self.awards.at[self.awards[self.awards.Award == award].index[0], "Point Value"] = int(points)
 
         self.awards.to_csv("awards.csv")
-        self.s3.Bucket('bdc-scoreboard').upload_file(Filename='../awards.csv', Key='awards.csv')
+        self.s3.Bucket('bdc-scoreboard').upload_file(Filename='awards.csv', Key='awards.csv')
 
     #Remove an award
     def remove_award(self, award):
         self.awards = self.awards[self.awards.Award != award]
         self.awards.to_csv("awards.csv")
-        self.s3.Bucket('bdc-scoreboard').upload_file(Filename='../awards.csv', Key='awards.csv')
+        self.s3.Bucket('bdc-scoreboard').upload_file(Filename='awards.csv', Key='awards.csv')
 
     #Display awards
     def display_awards(self):
@@ -129,4 +129,4 @@ class Scoreboard:
     def display_award(self, award):
         self.awards = self.awards[self.awards.Award != 'award']
         self.awards.to_csv("awards.csv")
-        self.s3.Bucket('bdc-scoreboard').upload_file(Filename='../awards.csv', Key='awards.csv')
+        self.s3.Bucket('bdc-scoreboard').upload_file(Filename='awards.csv', Key='awards.csv')
