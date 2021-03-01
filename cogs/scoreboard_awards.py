@@ -114,6 +114,12 @@ class ScoreboardAwards(commands.Cog):
         embed.add_field(name="*Points Available*", value="" + self.sb.display_awards() + "")
         await ctx.send(embed=embed)
 
+    @commands.command(name='display_commits')
+    async def display_commits(self, ctx, name=None):
+        embed = discord.Embed(title="Total Commits",
+                              description="This leaderboard lists members with the highest number of total GitHub commits", color=0x3357FF)
+        embed.add_field(name="**Top Committers**", value="```" + self.sb.display_commits(name=name) + "```")
+        await ctx.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
@@ -144,6 +150,7 @@ class ScoreboardAwards(commands.Cog):
                 name = self.sb.df[self.sb.df.GitHub == committer].Member.iloc[0]
                 p = self.sb.get_award_value("Code Commit")
                 self.sb.add(name, p)
+                self.sb.add_commit(name)
                 await message.channel.send(name + " has earned " + str(p) + " points for committing to GitHub!")
         else:
             self.prev_committer = ""
