@@ -32,7 +32,7 @@ class Scoreboard:
 
     def update_S3(self):
         self.df.to_csv("scoreboard.csv")
-        self.s3.Bucket('bdc-scoreboard').upload_file(Filename='Big-Data-Club/scoreboard.csv', Key='Big-Data-Club/scoreboard.csv')
+        self.s3.Bucket('bdc-scoreboard').upload_file(Filename='scoreboard.csv', Key='Big-Data-Club/scoreboard.csv')
 
     #Add points to the specified user
     def add(self,name,value):
