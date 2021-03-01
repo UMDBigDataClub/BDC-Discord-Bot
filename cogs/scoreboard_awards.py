@@ -144,7 +144,7 @@ class ScoreboardAwards(commands.Cog):
                 name = self.sb.df[self.sb.df.GitHub == committer].Member.iloc[0]
                 p = self.sb.get_award_value("Code Commit")
                 self.sb.add(name, p)
-                await message.channel.send(name + " has earned " + p + " points for committing to GitHub!")
+                await message.channel.send(name + " has earned " + str(p) + " points for committing to GitHub!")
         else:
             self.prev_committer = ""
 
