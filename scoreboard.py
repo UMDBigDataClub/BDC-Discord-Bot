@@ -26,7 +26,7 @@ class Scoreboard:
         self.df.to_csv("scoreboard.csv")
 
         obj = self.s3.Bucket('bdc-scoreboard').Object("awards.csv").get()
-        self.awards = pd.read_csv(obj["Body"], index_col=0)
+        self.awards = pd.read_csv(obj["Body"], index_col=0, dtype={"Award": 'string', 'Description': 'string', 'Point Value': 'Int64'})
         self.awards.to_csv("awards.csv")
 
 
@@ -68,18 +68,11 @@ class Scoreboard:
             else:
                 return self.df[self.df.Participating][self.standard_display].sort_values("Score", axis=0, ascending=False).reset_index(drop=True).to_string()
 
-    def display_awards(self):
-        output = ""
-        for i in self.awards.index:
-            output += "**" + self.awards.loc[i,"Award"].ljust(15) + "(" + str(self.awards.loc[i,"Point Value"]) + ")** : " + self.awards.loc[i,"Description"] + "\n"
-        return output
-
     #Add a new user to the scoreboard
-    def create_user(self, name, github = None, email = None):
+    def add_user(self, name, github = None, email = None):
         self.df = self.df.append(pd.DataFrame({"Member": [name], "Score": [0], "AllTime": [0], "GitHub": github, "Email": email, "Participating": True}), ignore_index=True, sort=True)
         self.df.to_csv("scoreboard.csv")
         self.s3.Bucket('bdc-scoreboard').upload_file(Filename='scoreboard.csv', Key='scoreboard.csv')
-
 
     #Edit a user's github, email, or participation status
     def update(self, name, github = None, email = None, participating = None):
@@ -98,27 +91,40 @@ class Scoreboard:
         self.s3.Bucket('bdc-scoreboard').upload_file(Filename='scoreboard.csv', Key='scoreboard.csv')
 
     #Add award
-    def create_award(self, award, description, point_value = 0):
-        self.awards = self.awards.append(pd.DataFrame({"Award": [name], "Description": [description], "Points": [0]}), ignore_index=True, sort=True)
+    def add_award(self, award, description, points):
+        print(points)
+        self.awards = self.awards.append(pd.DataFrame({"Award": [award], "Description": [description], "Point Value": [points]}), ignore_index=True, sort=True)
         self.awards.to_csv("awards.csv")
         self.s3.Bucket('bdc-scoreboard').upload_file(Filename='awards.csv', Key='awards.csv')
 
     #Edit award
-    def edit_award(self, award, description = None, point_value = None):
+    def edit_award(self, award, description = None, points = None):
         if description:
             self.awards.at[self.awards[self.awards.Award == award].index[0], "Description"] = description
 
-        if point_value:
-            self.awards.at[self.awards[self.awards.Award == award].index[0], "Description"] = int(point_value)
+        if points:
+            self.awards.at[self.awards[self.awards.Award == award].index[0], "Point Value"] = int(points)
 
         self.awards.to_csv("awards.csv")
         self.s3.Bucket('bdc-scoreboard').upload_file(Filename='awards.csv', Key='awards.csv')
 
     #Remove an award
     def remove_award(self, award):
-        self.awards = self.awards[self.awards.Award != 'award']
+        self.awards = self.awards[self.awards.Award != award]
         self.awards.to_csv("awards.csv")
         self.s3.Bucket('bdc-scoreboard').upload_file(Filename='awards.csv', Key='awards.csv')
+
+    #Display awards
+    def display_awards(self):
+        self.awards.sort_values("Point Value", inplace=True)
+        output = ""
+        for i in self.awards.index:
+            output += "**" + self.awards.loc[i,"Award"].ljust(15) + "(" + str(self.awards.loc[i,"Point Value"]) + ")** : " + self.awards.loc[i,"Description"] + "\n"
+        return output
+
+    #Get point value of an award
+    def get_award_value(self, award):
+        return self.awards[self.awards.Award==award].iloc[0,2]
 
     def display_award(self, award):
         self.awards = self.awards[self.awards.Award != 'award']

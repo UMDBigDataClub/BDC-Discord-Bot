@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import discord
 import os
-import pandas as pd
-import json
 from discord.utils import get
 from discord.ext import commands
 from scoreboard import Scoreboard
@@ -19,7 +17,6 @@ intents.members = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 
-
 @bot.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(bot))
@@ -29,11 +26,12 @@ async def on_ready():
 async def scoreboard(ctx):
     embed = discord.Embed(title="Big Data Club Scoreboard", description="Check out who's leading the pack in points this semester!", color=0x3357FF)
     embed.add_field(name="**Top Scorers**", value="```" + sb.display() + "```")
-    await ctx.send(embed = embed)
+    await ctx.send(embed=embed)
 
     # Prints the score of everyone in the scoreboard.csv file
     # if message.content == '/scoreboard':
     #    await message.channel.send(sb.display())
+
 
 @bot.command(name='scoreboard_everyone')
 async def scoreboard_everyone(ctx):
@@ -41,24 +39,29 @@ async def scoreboard_everyone(ctx):
     embed.add_field(name="**Top Scorers**", value="```" + sb.display(non_participating=True) + "```")
     await ctx.send(embed=embed)
 
+
 @bot.command(name='scoreboard_all_time')
 async def scoreboard_all_time(ctx):
-    embed = discord.Embed(title="Big Data Club Scoreboard - All Time",description="This shows the total scores attained by all BDC members since time immemorial", color=0x3357FF)
+    embed = discord.Embed(title="Big Data Club Scoreboard - All Time", description="This shows the total scores attained by all BDC members since time immemorial", color=0x3357FF)
     embed.add_field(name="**Top Scorers**", value="```" + sb.display(all_time=True, non_participating=True) + "```")
     await ctx.send(embed=embed)
+
 
 @bot.command(name='score_all_time')
 async def scoreboard_all_time(ctx, username):
     await ctx.send(sb.display(name=username, all_time=True))
 
+
 @bot.command(name='score')
 async def scoreboard_all_time(ctx, username):
     await ctx.send(sb.display(name=username))
+
 
 @bot.command(name='add')
 async def add(ctx, username, value):
     if 'Administrator' in [role.name for role in ctx.author.roles]:
         sb.add(username, int(value))
+
 
 @bot.command(name='set_github')
 async def set_github(ctx, github, username=None):
@@ -67,6 +70,7 @@ async def set_github(ctx, github, username=None):
     elif 'Administrator' in [role.name for role in ctx.author.roles]:
         sb.update(name=username, github=github)
 
+
 @bot.command(name='set_email')
 async def set_email(ctx, email, username=None):
     if not username:
@@ -74,55 +78,66 @@ async def set_email(ctx, email, username=None):
     elif 'Administrator' in [role.name for role in ctx.author.roles]:
         sb.update(name=username, email=email)
 
+
 @bot.command(name='set_participating')
 async def set_participating(ctx, participating_true_or_false, username=None):
     if not username:
-        sb.update(name=ctx.author.name, participating = participating_true_or_false)
+        sb.update(name=ctx.author.name, participating=participating_true_or_false)
     elif 'Administrator' in [role.name for role in ctx.author.roles]:
-        sb.update(name=username, participating = participating_true_or_false)
+        sb.update(name=username, participating=participating_true_or_false)
+
 
 @bot.command(name='add_user')
 async def add_user(ctx, name, email=None, github=None):
     if 'Administrator' in [role.name for role in ctx.author.roles]:
-        sb.create_user(name, email, github)
+        sb.add_user(name, email, github)
+
 
 @bot.command(name='remove_user')
 async def remove_user(ctx, name):
     if 'Administrator' in [role.name for role in ctx.author.roles]:
         sb.remove_user(name)
 
+
 @bot.command(name='add_award')
-async def add_award(ctx, award, description=None, points=None):
+async def add_award(ctx, award, description, points):
+    print(points)
     sb.add_award(award, description, points)
 
+
 @bot.command(name='set_award_desc')
-async def set_award_desc(ctx, award, description=None, points=None):
+async def set_award_desc(ctx, award, description=None):
     sb.edit_award(award, description=description)
 
+
 @bot.command(name='set_award_points')
-async def set_award_points(ctx, award, description=None, points=None):
+async def set_award_points(ctx, award, points=None):
     sb.edit_award(award, points=points)
+
 
 @bot.command(name='remove_award')
 async def remove_award(ctx, award):
     sb.remove_award(award)
 
-@bot.command(name='honk')
-async def honk(ctx):
-    await ctx.send(":bird: *doot doot* :bird:")
 
 @bot.command(name='awards')
 async def awards(ctx):
     embed = discord.Embed(title="Scoreboard Awards",
                           description="List of potential tasks to win points on the scoreboard.",
                           color=0x3357FF)
-
-    embed.add_field(name="**Available Awards**", value="" + sb.display_awards() + "")
+    embed.add_field(name="*Points Available*", value="" + sb.display_awards() + "")
     await ctx.send(embed=embed)
+
+
+@bot.command(name='honk')
+async def honk(ctx):
+    await ctx.send(":bird: *doot doot* :bird:")
+
 
 @bot.event
 async def on_member_join(member):
-    sb.create_user(member.name)
+    sb.add_user(member.name)
+
 
 @bot.event
 async def on_message(message):
@@ -134,29 +149,29 @@ async def on_message(message):
     if message.author == bot.user:
         return
 
-    if message.author != "BDC-Bot" and message.author != "GitHub":
+    if message.author != "BDC-Bot" and message.author != "GitHub" and not message.content.startswith("!"):
         prev_author = cur_author
         cur_author = message.author.name
 
     # Give members one point for each message, but only if they are not posting multiple times in a row
     if cur_author != prev_author and prev_author != "" and not message.content.startswith(
             '/') and not message.content.startswith('\'') and not message.content.startswith('!'):
-        sb.add(cur_author, 1)
+        sb.add(cur_author, sb.get_award_value("Posting"))
 
     # Give members 20 points for each GitHub commit, but only if they are nonconsecutive
     if message.author.name == "GitHub":
         committer = message.embeds[0].to_dict()["author"]["name"]
         # Test for previous committer
-        if committer in sb.df.GitHub.values and committer != prev_committer:
+        if committer in sb.df.GitHub.values and (committer != prev_committer or committer != prev_author):
             prev_committer = committer
             name = sb.df[sb.df.GitHub == committer].Member.iloc[0]
-            sb.add(name, 20)
-            await message.channel.send(name + " has earned 20 points for committing to GitHub!")
+            p = sb.get_award_value("Code Commit")
+            sb.add(name, p)
+            await message.channel.send(name + " has earned " + p + " points for committing to GitHub!")
     else:
         prev_committer = ""
 
     await bot.process_commands(message)
-
 
 
 # reaction roles, assigns roles based on emoji used for the reaction of a specific message
@@ -213,4 +228,3 @@ async def on_reaction_add(reaction, user):
 
 
 bot.run(os.getenv('TOKEN'))
-
