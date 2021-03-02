@@ -9,6 +9,7 @@ intents.members = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 bot.load_extension("cogs.scoreboard_awards")
 bot.load_extension("cogs.roles")
+bot.load_extension("cogs.setup")
 
 
 @bot.event
