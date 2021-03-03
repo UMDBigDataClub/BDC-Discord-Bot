@@ -74,8 +74,10 @@ class Scoreboard:
 
     #Add a new user to the scoreboard
     def add_user(self, name, github = None, email = None):
-        self.df = self.df.append(pd.DataFrame({"Member": [name], "Score": [0], "AllTime": [0], "GitHub": github, "Email": email, "Participating": True}), ignore_index=True, sort=True)
-        self.update_S3()
+        if name not in self.df.Member.values:
+            self.df = self.df.append(pd.DataFrame({"Member": [name], "Score": [0], "AllTime": [0], "GitHub": github, "Email": email, "Participating": True}), ignore_index=True, sort=True)
+            self.update_S3()
+
 
     #Edit a user's github, email, or participation status
     def update(self, name, github = None, email = None, participating = None):
