@@ -3,6 +3,4 @@ A discord bot for the UMass Dartmouth Big Data Club! Note that if you wish to ru
 
 ### Current commands ###
 
-/scoreboard : View the current scoreboard for the club
-
-/add [integer] [name] : adds a score of [integer] to the Discord user whose username is [name]
+See !help for a list of current commands.
