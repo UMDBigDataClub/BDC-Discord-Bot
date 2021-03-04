@@ -30,9 +30,13 @@ class Scoreboard:
         self.awards = pd.read_csv(obj["Body"], index_col=0, dtype={"Award": 'string', 'Description': 'string', 'Point Value': 'Int64'})
         self.awards.to_csv("awards.csv")
 
-    def update_S3(self):
-        self.df.to_csv("scoreboard.csv")
-        self.s3.Bucket('bdc-scoreboard').upload_file(Filename='scoreboard.csv', Key='Big-Data-Club/scoreboard.csv')
+    def update_S3(self, table):
+        if table == "scoreboard":
+            self.df.to_csv("scoreboard.csv")
+            self.s3.Bucket('bdc-scoreboard').upload_file(Filename='scoreboard.csv', Key='Big-Data-Club/scoreboard.csv')
+        elif table == "awards":
+            self.awards.to_csv("awards.csv")
+            self.s3.Bucket('bdc-scoreboard').upload_file(Filename='awards.csv', Key='Big-Data-Club/awards.csv')
 
     #Add points to the specified user
     def add(self,name,value):
@@ -40,8 +44,7 @@ class Scoreboard:
         self.df.at[self.df[self.df.Member == name].index[0], "AllTime"] += value
         self.df.sort_values("Score", axis=0, inplace = True, ascending=False)
         self.df.reset_index(drop=True, inplace = True)
-        self.df.to_csv("scoreboard.csv")
-        self.s3.Bucket('bdc-scoreboard').upload_file(Filename='scoreboard.csv', Key='scoreboard.csv')
+        self.update_S3("scoreboard")
 
 
     #Display the scoreboard according to specified variables
@@ -76,7 +79,7 @@ class Scoreboard:
     def add_user(self, name, github = None, email = None):
         if name not in self.df.Member.values:
             self.df = self.df.append(pd.DataFrame({"Member": [name], "Score": [0], "AllTime": [0], "GitHub": github, "Email": email, "Participating": True}), ignore_index=True, sort=True)
-            self.update_S3()
+            self.update_S3("scoreboard")
 
 
     #Edit a user's github, email, or participation status
@@ -87,32 +90,30 @@ class Scoreboard:
             self.df.at[self.df[self.df.Member == name].index[0], "Email"] = email
         if participating:
             self.df.at[self.df[self.df.Member == name].index[0], "Participating"] = participating == "True"
-        self.update_S3()
+        self.update_S3("scoreboard")
 
     def remove_user(self, name):
         self.df = self.df[self.df.Member != name]
-        self.update_S3()
+        self.update_S3("scoreboard")
 
     #Add award
     def add_award(self, award, description, points):
         print(points)
         self.awards = self.awards.append(pd.DataFrame({"Award": [award], "Description": [description], "Point Value": [points]}), ignore_index=True, sort=True)
-        self.update_S3()
+        self.update_S3("awards")
 
     #Edit award
     def edit_award(self, award, description = None, points = None):
         if description:
             self.awards.at[self.awards[self.awards.Award == award].index[0], "Description"] = description
-
         if points:
             self.awards.at[self.awards[self.awards.Award == award].index[0], "Point Value"] = int(points)
-
-        self.update_S3()
+        self.update_S3("awards")
 
     #Remove an award
     def remove_award(self, award):
         self.awards = self.awards[self.awards.Award != award]
-        self.update_S3()
+        self.update_S3("awards")
 
     #Display awards
     def display_awards(self):
@@ -134,7 +135,7 @@ class Scoreboard:
     #Record a commit
     def add_commit(self, name):
         self.df.at[self.df[self.df.Member == name].index[0], "Commits"] += 1
-        self.update_S3()
+        self.update_S3("scoreboard")
 
     #Display total commits
     def display_commits(self, name = None):
