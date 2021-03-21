@@ -8,8 +8,6 @@ class ScoreboardAwards(commands.Cog):
         self.sb = Scoreboard()
         self.prev_author = ""
         self.cur_author = ""
-        self.prev_committer = ""
-
 
     @commands.command(name='scoreboard')
     async def scoreboard(self, ctx):
@@ -152,9 +150,9 @@ class ScoreboardAwards(commands.Cog):
         # Give members 20 points for each GitHub commit, but only if they are nonconsecutive
         if message.author.name == "GitHub":
             committer = message.embeds[0].to_dict()["author"]["name"]
-            # Test for previous committer
-            if committer in self.sb.df.GitHub.values and (committer != self.prev_committer or committer != self.prev_author):
-                self.prev_committer = committer
+            # Test for previous committer and previous author
+            if committer in self.sb.df.GitHub.values and committer != self.prev_author:
+                self.prev_author = committer
                 name = self.sb.df[self.sb.df.GitHub == committer].Member.iloc[0]
                 p = self.sb.get_award_value("Code Commit")
                 self.sb.add(name, p)

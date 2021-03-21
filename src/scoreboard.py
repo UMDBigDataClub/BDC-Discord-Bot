@@ -40,11 +40,13 @@ class Scoreboard:
 
     #Add points to the specified user
     def add(self,name,value):
-        self.df.at[self.df[self.df.Member == name].index[0], "Score"] += value
-        self.df.at[self.df[self.df.Member == name].index[0], "AllTime"] += value
-        self.df.sort_values("Score", axis=0, inplace = True, ascending=False)
-        self.df.reset_index(drop=True, inplace = True)
-        self.update_S3("scoreboard")
+        if name in self.df.Member.values:
+            self.df.at[self.df[self.df.Member == name].index[0], "Score"] += value
+            self.df.at[self.df[self.df.Member == name].index[0], "AllTime"] += value
+            self.df.sort_values("Score", axis=0, inplace = True, ascending=False)
+            self.df.reset_index(drop=True, inplace = True)
+            self.update_S3("scoreboard")
+
 
 
     #Display the scoreboard according to specified variables
