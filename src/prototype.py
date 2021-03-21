@@ -37,7 +37,7 @@ async def on_message(message):
     #        data={
     #            'text': prev_message,
     #        },
-    #        headers={'api-key': '5a969f50-dad3-4af3-8177-72e5a1ad8ed3'}
+    #        headers={'api-key': 'API-KEY-HERE'}
     #    )
     #    gpt2_output = r.json()['output']
     #    gpt2_output = gpt2_output.split("\n\n")[1]
