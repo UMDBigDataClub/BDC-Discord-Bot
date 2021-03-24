@@ -8,9 +8,11 @@ import requests
 load_dotenv()
 
 intents = discord.Intents.default()
-#intents.members = True
+intents.members = True
+intents.reactions = True
 
 bot = commands.Bot(command_prefix='!', intents=intents)
+bot.load_extension("cogs.roles")
 
 prev_message = ""
 
@@ -21,7 +23,7 @@ async def on_ready():
 @bot.command(name='honk')
 async def honk(ctx):
     await ctx.send(":bird: *doot doot* :bird:")
-
+"""
 @bot.event
 async def on_message(message):
     global prev_message
@@ -44,6 +46,6 @@ async def on_message(message):
     #    await message.channel.send(gpt2_output)
 
     prev_message = message.content
-
+"""
 
 bot.run(os.getenv('TOKEN'))
